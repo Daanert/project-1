@@ -19,17 +19,19 @@ import {
   TableContainer,
   TableRow,
   Paper,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import DownloadIcon from '@mui/icons-material/Download';
 import ZipIcon from '@mui/icons-material/Archive';
 
-const PDFGallery = ({ files }) => {
+const PDFGallery = ({ files, onDownloadFile, onDownloadSelected, onDownloadAll }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewFile, setPreviewFile] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleFileSelect = (file) => {
     const isSelected = selectedFiles.some(f => f.id === file.id);
@@ -51,16 +53,32 @@ const PDFGallery = ({ files }) => {
     setPreviewOpen(false);
   };
 
-  const handleDownloadSelected = () => {
-    // This is a placeholder - would actually call an API to download selected files
-    console.log('Downloading selected files:', selectedFiles);
-    alert('Download functionality would be implemented here');
+  const handleDownloadSelected = async () => {
+    if (selectedFiles.length === 0) return;
+    
+    try {
+      setIsDownloading(true);
+      await onDownloadSelected(selectedFiles);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const handleDownloadAll = () => {
-    // This is a placeholder - would actually call an API to download all files
-    console.log('Downloading all files as ZIP');
-    alert('Download ZIP functionality would be implemented here');
+  const handleDownloadAll = async () => {
+    if (files.length === 0) return;
+    
+    try {
+      setIsDownloading(true);
+      await onDownloadAll();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadSingle = (file) => {
+    if (onDownloadFile) {
+      onDownloadFile(file);
+    }
   };
 
   return (
@@ -72,17 +90,18 @@ const PDFGallery = ({ files }) => {
         <Box>
           <Button 
             variant="outlined" 
-            startIcon={<DownloadIcon />}
+            startIcon={isDownloading ? <CircularProgress size={20} /> : <DownloadIcon />}
             sx={{ mr: 2 }}
-            disabled={selectedFiles.length === 0}
+            disabled={selectedFiles.length === 0 || isDownloading}
             onClick={handleDownloadSelected}
           >
             Download Selected ({selectedFiles.length})
           </Button>
           <Button 
             variant="contained" 
-            startIcon={<ZipIcon />}
+            startIcon={isDownloading ? <CircularProgress size={20} /> : <ZipIcon />}
             onClick={handleDownloadAll}
+            disabled={files.length === 0 || isDownloading}
           >
             Download All as ZIP
           </Button>
@@ -173,19 +192,16 @@ const PDFGallery = ({ files }) => {
             <DialogContent dividers>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                 <Box sx={{ flex: 2 }}>
-                  <img
-                    src={previewFile.previewUrl}
-                    alt={previewFile.name}
-                    style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
+                  <iframe
+                    src={`${previewFile.previewUrl}#toolbar=0`}
+                    title={previewFile.name}
+                    style={{ width: '100%', height: '500px', border: 'none' }}
                   />
                   <Box sx={{ mt: 2, textAlign: 'center' }}>
                     <Chip 
-                      label={`Page 1 of ${previewFile.pageCount}`} 
+                      label={`${previewFile.pageCount} ${previewFile.pageCount === 1 ? 'page' : 'pages'}`} 
                       variant="outlined" 
                     />
-                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                      (Page navigation would be implemented here)
-                    </Typography>
                   </Box>
                 </Box>
                 <Box sx={{ flex: 1 }}>
@@ -209,6 +225,18 @@ const PDFGallery = ({ files }) => {
                           <TableCell component="th" scope="row">Sender</TableCell>
                           <TableCell>{previewFile.metadata.sender}</TableCell>
                         </TableRow>
+                        {previewFile.metadata.subject && (
+                          <TableRow>
+                            <TableCell component="th" scope="row">Subject</TableCell>
+                            <TableCell>{previewFile.metadata.subject}</TableCell>
+                          </TableRow>
+                        )}
+                        {previewFile.metadata.recipients && (
+                          <TableRow>
+                            <TableCell component="th" scope="row">Recipients</TableCell>
+                            <TableCell>{previewFile.metadata.recipients}</TableCell>
+                          </TableRow>
+                        )}
                         <TableRow>
                           <TableCell component="th" scope="row">Pages</TableCell>
                           <TableCell>{previewFile.pageCount}</TableCell>
@@ -223,7 +251,7 @@ const PDFGallery = ({ files }) => {
               <Button 
                 startIcon={<DownloadIcon />}
                 variant="contained"
-                onClick={() => alert(`Downloading ${previewFile.name}`)}
+                onClick={() => handleDownloadSingle(previewFile)}
               >
                 Download PDF
               </Button>
