@@ -32,12 +32,12 @@ export const uploadFiles = async (files) => {
   }
 };
 
-export const getFiles = async () => {
+export const getImages = async () => {
   try {
-    const response = await api.get('/files');
+    const response = await api.get('/images');
     return response.data;
   } catch (error) {
-    console.error('Error getting file list:', error);
+    console.error('Error getting image list:', error);
     throw error;
   }
 };
@@ -58,7 +58,7 @@ export const downloadSelectedFiles = async (filenames) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `selected_pdfs.zip`);
+    link.setAttribute('download', `selected_images.zip`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

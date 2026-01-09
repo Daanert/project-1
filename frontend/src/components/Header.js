@@ -1,15 +1,17 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 
 const Header = () => {
   return (
-    <AppBar position="static" color="primary" elevation={4}>
+    <AppBar position="static" elevation={0} sx={{
+      background: 'linear-gradient(90deg, #2196f3 0%, #21cbf3 100%)',
+    }}>
       <Toolbar>
         <Box display="flex" alignItems="center">
-          <PictureAsPdfIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" component="div">
-            MSG to PDF Converter
+          <PhotoLibraryIcon sx={{ mr: 2, fontSize: 32 }} />
+          <Typography variant="h5" component="div" fontWeight={600}>
+            ComfyUI Gallery
           </Typography>
         </Box>
       </Toolbar>
@@ -17,4 +19,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;
