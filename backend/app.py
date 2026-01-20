@@ -232,6 +232,50 @@ def get_image(image_id):
     return jsonify({'error': 'Image not found'}), 404
 
 
+@app.route('/api/metadata/<filename>', methods=['GET'])
+def get_image_metadata(filename):
+    """Get metadata for a specific image by filename"""
+    update_image_cache()
+
+    # Find the image path by filename
+    image_path = None
+    for cached_path in _image_path_cache.values():
+        if os.path.basename(cached_path) == filename:
+            image_path = cached_path
+            break
+
+    if not image_path or not os.path.exists(image_path):
+        return jsonify({'error': 'Image not found'}), 404
+
+    # Extract metadata if it's a PNG
+    if filename.lower().endswith('.png'):
+        try:
+            raw_metadata = metadata_extractor.extract_metadata(image_path)
+            metadata = metadata_extractor.format_metadata_for_display(raw_metadata)
+            return jsonify(metadata), 200
+        except Exception as e:
+            print(f"Error extracting metadata: {e}")
+            return jsonify({
+                'positive_prompt': 'Error extracting metadata',
+                'negative_prompt': 'N/A',
+                'sampler': {},
+                'loras': [],
+                'models': [],
+                'has_workflow': False,
+                'has_prompt': False
+            }), 200
+    else:
+        return jsonify({
+            'positive_prompt': 'N/A (Not a PNG file)',
+            'negative_prompt': 'N/A',
+            'sampler': {},
+            'loras': [],
+            'models': [],
+            'has_workflow': False,
+            'has_prompt': False
+        }), 200
+
+
 @app.route('/api/download/<image_id>', methods=['GET'])
 def download_image(image_id):
     """Download a single image"""

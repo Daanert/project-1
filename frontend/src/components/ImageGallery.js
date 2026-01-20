@@ -29,9 +29,11 @@ const ImageGallery = ({ images, onDownloadSelected, onDownloadAll }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.down('lg'));
+  const isLargeDesktop = useMediaQuery(theme.breakpoints.down('xl'));
 
-  // Determine grid columns based on screen size
-  const gridColumns = isMobile ? 1 : isTablet ? 2 : 3;
+  // Determine grid columns based on screen size (1/2/3/4/5/6 columns)
+  const gridColumns = isMobile ? 1 : isTablet ? 2 : isDesktop ? 3 : isLargeDesktop ? 4 : 6;
 
   const handleImageSelect = (image) => {
     setSelectedImages((prevSelected) => {
@@ -133,7 +135,7 @@ const ImageGallery = ({ images, onDownloadSelected, onDownloadAll }) => {
           const hasMetadata = image.metadata && image.metadata.has_prompt;
 
           return (
-            <Grid item xs={12} sm={6} md={4} key={image.filename}>
+            <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={image.filename}>
               <Card
                 sx={{
                   position: 'relative',
@@ -194,13 +196,14 @@ const ImageGallery = ({ images, onDownloadSelected, onDownloadAll }) => {
                 {/* Thumbnail Image */}
                 <CardMedia
                   component="img"
-                  height="200"
                   image={image.thumbnail_url || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+'}
                   alt={image.filename}
                   onClick={() => handleImageClick(index)}
                   sx={{
+                    aspectRatio: '1',
                     objectFit: 'cover',
                     backgroundColor: '#f0f0f0',
+                    width: '100%',
                   }}
                 />
 

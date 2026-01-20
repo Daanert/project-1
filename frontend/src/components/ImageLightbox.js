@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
+import axios from 'axios';
 import {
   Dialog,
   Box,
@@ -13,6 +14,8 @@ import {
   useTheme,
   Collapse,
   Button,
+  CircularProgress,
+  Grid,
 } from '@mui/material';
 import {
   Close,
@@ -26,6 +29,8 @@ import {
 const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
   const [index, setIndex] = useState(currentIndex);
   const [metadataExpanded, setMetadataExpanded] = useState(true);
+  const [fullMetadata, setFullMetadata] = useState(null);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -41,6 +46,29 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
   useEffect(() => {
     onIndexChange(index);
   }, [index, onIndexChange]);
+
+  // Fetch full metadata when image changes
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      if (!currentImage.filename.toLowerCase().endsWith('.png')) {
+        setFullMetadata(null);
+        return;
+      }
+
+      setLoadingMetadata(true);
+      try {
+        const response = await axios.get(`/api/metadata/${currentImage.filename}`);
+        setFullMetadata(response.data);
+      } catch (error) {
+        console.error('Error fetching metadata:', error);
+        setFullMetadata(null);
+      } finally {
+        setLoadingMetadata(false);
+      }
+    };
+
+    fetchMetadata();
+  }, [currentImage.filename]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -83,7 +111,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
     trackMouse: false,
   });
 
-  const metadata = currentImage.metadata || {};
+  const metadata = fullMetadata || {};
   const sampler = metadata.sampler || {};
 
   return (
@@ -95,9 +123,9 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
       fullScreen={isMobile}
       PaperProps={{
         sx: {
-          backgroundColor: 'rgba(0, 0, 0, 0.95)',
-          width: isMobile ? '100%' : '95vw',
-          height: isMobile ? '100%' : '95vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.92)',
+          width: isMobile ? '100%' : '75vw',
+          height: isMobile ? '100%' : '90vh',
           m: 0,
         },
       }}
@@ -268,17 +296,17 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
         {/* Metadata Panel */}
         <Paper
           sx={{
-            width: isMobile ? '100%' : 400,
+            width: isMobile ? '100%' : 420,
             maxHeight: isMobile ? '50vh' : '100%',
             overflowY: 'auto',
-            backgroundColor: '#1a1a1a',
-            color: 'white',
+            backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#f5f5f5',
+            color: theme.palette.mode === 'dark' ? 'white' : 'black',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
           {/* Header */}
-          <Box sx={{ p: 2, position: 'sticky', top: 0, backgroundColor: '#1a1a1a', zIndex: 1 }}>
+          <Box sx={{ p: 2, position: 'sticky', top: 0, backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#f5f5f5', zIndex: 1 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ fontSize: isMobile ? '1rem' : '1.25rem' }}>
                 Image Details
@@ -287,7 +315,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
                 <IconButton
                   size="small"
                   onClick={() => setMetadataExpanded(!metadataExpanded)}
-                  sx={{ color: 'white' }}
+                  sx={{ color: theme.palette.mode === 'dark' ? 'white' : 'black' }}
                 >
                   {metadataExpanded ? <ExpandLess /> : <ExpandMore />}
                 </IconButton>
@@ -309,26 +337,133 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
             <Box sx={{ p: 2, pt: 0 }}>
               {/* File Info */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="primary" gutterBottom>
+                <Typography variant="subtitle2" color="primary" gutterBottom fontWeight={600}>
                   FILE INFORMATION
                 </Typography>
                 <Typography variant="body2" noWrap title={currentImage.filename} sx={{ mb: 0.5 }}>
                   {currentImage.filename}
                 </Typography>
-                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                  <Chip label={`${currentImage.width} × ${currentImage.height}`} size="small" />
-                  <Chip label={`${Math.round(currentImage.size / 1024)} KB`} size="small" />
+                <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
+                  <Chip label={`${currentImage.width} × ${currentImage.height}`} size="small" variant="outlined" />
+                  <Chip label={`${Math.round(currentImage.size / 1024 / 1024 * 100) / 100} MB`} size="small" variant="outlined" />
                 </Stack>
               </Box>
 
-              <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
+              <Divider sx={{ my: 2 }} />
+
+              {/* Loading Metadata */}
+              {loadingMetadata && (
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <CircularProgress size={30} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Loading metadata...
+                  </Typography>
+                </Box>
+              )}
 
               {/* ComfyUI Metadata */}
-              {metadata.has_prompt ? (
+              {!loadingMetadata && metadata.has_prompt && (
                 <>
+                  {/* Generation Parameters */}
+                  {(sampler.seed || sampler.steps || sampler.cfg || sampler.sampler_name) && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="primary" gutterBottom fontWeight={600}>
+                        GENERATION PARAMETERS
+                      </Typography>
+                      <Grid container spacing={1}>
+                        {sampler.seed && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">Seed</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.seed}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                        {sampler.steps && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">Steps</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.steps}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                        {sampler.cfg && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">CFG Scale</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.cfg}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                        {sampler.sampler_name && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">Sampler</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.sampler_name}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                        {sampler.scheduler && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">Scheduler</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.scheduler}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                        {sampler.denoise && (
+                          <Grid item xs={6}>
+                            <Paper sx={{ p: 1, bgcolor: 'action.hover' }}>
+                              <Typography variant="caption" color="text.secondary">Denoise</Typography>
+                              <Typography variant="body2" fontWeight={500}>{sampler.denoise}</Typography>
+                            </Paper>
+                          </Grid>
+                        )}
+                      </Grid>
+                    </Box>
+                  )}
+
+                  {/* Models */}
+                  {metadata.models && metadata.models.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="primary" gutterBottom fontWeight={600}>
+                        MODEL
+                      </Typography>
+                      {metadata.models.map((model, idx) => (
+                        <Chip key={idx} label={model} size="small" sx={{ mr: 0.5, mb: 0.5 }} color="primary" variant="outlined" />
+                      ))}
+                    </Box>
+                  )}
+
+                  {/* LoRAs */}
+                  {metadata.loras && metadata.loras.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="primary" gutterBottom fontWeight={600}>
+                        LORAS
+                      </Typography>
+                      <Stack spacing={1}>
+                        {metadata.loras.map((lora, idx) => (
+                          <Paper key={idx} sx={{ p: 1, bgcolor: 'action.hover' }}>
+                            <Typography variant="body2" fontWeight={500}>{lora.name}</Typography>
+                            <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                              {lora.strength_model !== null && (
+                                <Chip label={`Model: ${lora.strength_model}`} size="small" variant="outlined" />
+                              )}
+                              {lora.strength_clip !== null && (
+                                <Chip label={`CLIP: ${lora.strength_clip}`} size="small" variant="outlined" />
+                              )}
+                            </Stack>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  <Divider sx={{ my: 2 }} />
+
                   {/* Positive Prompt */}
                   <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="success.main" gutterBottom>
+                    <Typography variant="subtitle2" color="success.main" gutterBottom fontWeight={600}>
                       POSITIVE PROMPT
                     </Typography>
                     <Paper
@@ -347,136 +482,36 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
                   </Box>
 
                   {/* Negative Prompt */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="error.main" gutterBottom>
-                      NEGATIVE PROMPT
-                    </Typography>
-                    <Paper
-                      sx={{
-                        p: 1.5,
-                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                        border: '1px solid rgba(244, 67, 54, 0.3)',
-                        maxHeight: 100,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {metadata.negative_prompt || 'N/A'}
+                  {metadata.negative_prompt && metadata.negative_prompt !== 'N/A' && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" color="error.main" gutterBottom fontWeight={600}>
+                        NEGATIVE PROMPT
                       </Typography>
-                    </Paper>
-                  </Box>
-
-                  <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
-
-                  {/* Sampler Parameters */}
-                  {Object.keys(sampler).length > 0 && (
-                    <>
-                      <Typography variant="subtitle2" color="primary" gutterBottom>
-                        SAMPLER PARAMETERS
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>
-                        {sampler.seed !== undefined && sampler.seed !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Seed:</Typography>
-                            <Typography variant="body2">{sampler.seed}</Typography>
-                          </Box>
-                        )}
-                        {sampler.steps !== undefined && sampler.steps !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Steps:</Typography>
-                            <Typography variant="body2">{sampler.steps}</Typography>
-                          </Box>
-                        )}
-                        {sampler.cfg_scale !== undefined && sampler.cfg_scale !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">CFG Scale:</Typography>
-                            <Typography variant="body2">{sampler.cfg_scale}</Typography>
-                          </Box>
-                        )}
-                        {sampler.sampler_name !== undefined && sampler.sampler_name !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Sampler:</Typography>
-                            <Typography variant="body2">{sampler.sampler_name}</Typography>
-                          </Box>
-                        )}
-                        {sampler.scheduler !== undefined && sampler.scheduler !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Scheduler:</Typography>
-                            <Typography variant="body2">{sampler.scheduler}</Typography>
-                          </Box>
-                        )}
-                        {sampler.denoise !== undefined && sampler.denoise !== 'N/A' && (
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Denoise:</Typography>
-                            <Typography variant="body2">{sampler.denoise}</Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
-                    </>
-                  )}
-
-                  {/* Models */}
-                  {metadata.models && metadata.models.length > 0 && (
-                    <>
-                      <Typography variant="subtitle2" color="primary" gutterBottom>
-                        MODELS
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>
-                        {metadata.models.map((model, idx) => (
-                          <Chip
-                            key={idx}
-                            label={model}
-                            size="small"
-                            sx={{ mr: 0.5, mb: 0.5 }}
-                          />
-                        ))}
-                      </Box>
-
-                      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
-                    </>
-                  )}
-
-                  {/* LoRA Nodes */}
-                  {metadata.loras && metadata.loras.length > 0 && (
-                    <>
-                      <Typography variant="subtitle2" color="primary" gutterBottom>
-                        LORA MODELS
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>
-                        {metadata.loras.map((lora, idx) => (
-                          <Paper
-                            key={idx}
-                            sx={{
-                              p: 1,
-                              mb: 1,
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                              {lora.name}
-                            </Typography>
-                            {lora.strength_model !== undefined && (
-                              <Typography variant="caption" display="block">
-                                Model Strength: {lora.strength_model}
-                              </Typography>
-                            )}
-                            {lora.strength_clip !== undefined && (
-                              <Typography variant="caption" display="block">
-                                CLIP Strength: {lora.strength_clip}
-                              </Typography>
-                            )}
-                          </Paper>
-                        ))}
-                      </Box>
-                    </>
+                      <Paper
+                        sx={{
+                          p: 1.5,
+                          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                          border: '1px solid rgba(244, 67, 54, 0.3)',
+                          maxHeight: 150,
+                          overflowY: 'auto',
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {metadata.negative_prompt}
+                        </Typography>
+                      </Paper>
+                    </Box>
                   )}
                 </>
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                  No ComfyUI metadata available for this image.
-                </Typography>
+              )}
+
+              {/* No Metadata */}
+              {!loadingMetadata && !metadata.has_prompt && (
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No ComfyUI metadata found in this image
+                  </Typography>
+                </Box>
               )}
             </Box>
           </Collapse>
