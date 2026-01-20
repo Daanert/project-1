@@ -38,12 +38,14 @@ def get_thumbnail_filename(image_path):
     return f"{path_hash}_thumb.jpg"
 
 
-def scan_comfyui_output():
+def scan_comfyui_output(extract_metadata=False):
     """Recursively scan the ComfyUI output folder for images"""
     images = []
 
     if not os.path.exists(COMFYUI_OUTPUT_FOLDER):
         return images
+
+    print(f"Scanning {COMFYUI_OUTPUT_FOLDER}...")
 
     # Walk through all subdirectories
     for root, dirs, files in os.walk(COMFYUI_OUTPUT_FOLDER):
@@ -51,11 +53,22 @@ def scan_comfyui_output():
             if allowed_file(filename):
                 full_path = os.path.join(root, filename)
                 try:
-                    # Get image info
+                    # Get image info quickly
                     with Image.open(full_path) as img:
                         width, height = img.size
 
-                    # Extract metadata for PNG files
+                    # Generate thumbnail filename
+                    thumbnail_filename = get_thumbnail_filename(full_path)
+                    thumbnail_path = os.path.join(THUMBNAILS_FOLDER, thumbnail_filename)
+
+                    # Only generate thumbnail if requested and doesn't exist
+                    # This is done on-demand when thumbnail is requested
+                    thumbnail_exists = os.path.exists(thumbnail_path)
+
+                    # Get relative path for display
+                    rel_path = os.path.relpath(full_path, COMFYUI_OUTPUT_FOLDER)
+
+                    # Basic metadata (extract full metadata on-demand)
                     metadata = {
                         'positive_prompt': 'N/A',
                         'negative_prompt': 'N/A',
@@ -63,23 +76,16 @@ def scan_comfyui_output():
                         'loras': [],
                         'models': [],
                         'has_workflow': False,
-                        'has_prompt': False
+                        'has_prompt': filename.lower().endswith('.png')
                     }
 
-                    if filename.lower().endswith('.png'):
-                        raw_metadata = metadata_extractor.extract_metadata(full_path)
-                        metadata = metadata_extractor.format_metadata_for_display(raw_metadata)
-
-                    # Generate thumbnail filename
-                    thumbnail_filename = get_thumbnail_filename(full_path)
-                    thumbnail_path = os.path.join(THUMBNAILS_FOLDER, thumbnail_filename)
-
-                    # Generate thumbnail if it doesn't exist
-                    if not os.path.exists(thumbnail_path):
-                        generate_thumbnail(full_path, thumbnail_path)
-
-                    # Get relative path for display
-                    rel_path = os.path.relpath(full_path, COMFYUI_OUTPUT_FOLDER)
+                    # Only extract metadata if explicitly requested (for lightbox view)
+                    if extract_metadata and filename.lower().endswith('.png'):
+                        try:
+                            raw_metadata = metadata_extractor.extract_metadata(full_path)
+                            metadata = metadata_extractor.format_metadata_for_display(raw_metadata)
+                        except Exception as e:
+                            print(f"Error extracting metadata from {filename}: {e}")
 
                     images.append({
                         'filename': filename,
@@ -91,7 +97,8 @@ def scan_comfyui_output():
                         'created': os.path.getmtime(full_path),
                         'thumbnail_url': f'/api/thumbnail/{thumbnail_filename}',
                         'image_url': f'/api/image/{thumbnail_filename.replace("_thumb.jpg", "")}',
-                        'metadata': metadata
+                        'metadata': metadata,
+                        'thumbnail_exists': thumbnail_exists
                     })
                 except Exception as e:
                     print(f"Error processing {full_path}: {e}")
@@ -99,6 +106,7 @@ def scan_comfyui_output():
 
     # Sort by creation time (newest first)
     images.sort(key=lambda x: x['created'], reverse=True)
+    print(f"Found {len(images)} images")
     return images
 
 
@@ -177,13 +185,26 @@ update_image_cache()
 
 @app.route('/api/thumbnail/<filename>', methods=['GET'])
 def get_thumbnail(filename):
-    """Return the thumbnail image"""
+    """Return the thumbnail image, generate if doesn't exist"""
     thumbnail_path = os.path.join(THUMBNAILS_FOLDER, filename)
 
+    # If thumbnail exists, return it
     if os.path.exists(thumbnail_path):
         return send_file(thumbnail_path, mimetype='image/jpeg')
-    else:
-        return jsonify({'error': 'Thumbnail not found'}), 404
+
+    # Otherwise, try to generate it on-demand
+    # Find the original image using the cache
+    thumbnail_id = filename.replace("_thumb.jpg", "")
+    update_image_cache()
+
+    if thumbnail_id in _image_path_cache:
+        image_path = _image_path_cache[thumbnail_id]
+        if os.path.exists(image_path):
+            # Generate thumbnail
+            if generate_thumbnail(image_path, thumbnail_path):
+                return send_file(thumbnail_path, mimetype='image/jpeg')
+
+    return jsonify({'error': 'Thumbnail not found'}), 404
 
 
 @app.route('/api/image/<image_id>', methods=['GET'])

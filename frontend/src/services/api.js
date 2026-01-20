@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Configure the base URL for the API
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Use relative URL so it goes through the proxy (works with Cloudflare tunnel)
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 // Create axios instance with defaults
 const api = axios.create({
