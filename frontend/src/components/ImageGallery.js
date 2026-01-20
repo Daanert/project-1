@@ -31,9 +31,10 @@ const ImageGallery = ({ images, onDownloadSelected, onDownloadAll }) => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isDesktop = useMediaQuery(theme.breakpoints.down('lg'));
   const isLargeDesktop = useMediaQuery(theme.breakpoints.down('xl'));
+  const isUltrawide = useMediaQuery('(min-width:2560px)');
 
-  // Determine grid columns based on screen size (1/2/3/4/5/6 columns)
-  const gridColumns = isMobile ? 1 : isTablet ? 2 : isDesktop ? 3 : isLargeDesktop ? 4 : 6;
+  // Determine grid columns based on screen size (1/2/3/4/6/8 columns)
+  const gridColumns = isMobile ? 1 : isTablet ? 2 : isDesktop ? 3 : isLargeDesktop ? 4 : isUltrawide ? 8 : 6;
 
   const handleImageSelect = (image) => {
     setSelectedImages((prevSelected) => {

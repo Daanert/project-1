@@ -124,8 +124,8 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
       PaperProps={{
         sx: {
           backgroundColor: 'rgba(0, 0, 0, 0.92)',
-          width: isMobile ? '100%' : '75vw',
-          height: isMobile ? '100%' : '90vh',
+          width: isMobile ? '100%' : '60vw',
+          height: isMobile ? '100%' : '85vh',
           m: 0,
         },
       }}
@@ -296,7 +296,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
         {/* Metadata Panel */}
         <Paper
           sx={{
-            width: isMobile ? '100%' : 420,
+            width: isMobile ? '100%' : 380,
             maxHeight: isMobile ? '50vh' : '100%',
             overflowY: 'auto',
             backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#f5f5f5',
