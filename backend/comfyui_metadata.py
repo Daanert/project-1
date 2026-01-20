@@ -116,26 +116,56 @@ class ComfyUIMetadataExtractor:
                         'denoise': inputs.get('denoise'),
                     }
 
-                # Extract positive prompt
+                # Extract positive prompt (check if it's a reference to another node)
                 if class_type in ['CLIPTextEncode', 'CLIPTextEncodeSDXL'] and self._is_positive_prompt(node_id, prompt_data):
                     text = inputs.get('text', '')
-                    if len(text) > len(metadata['positive_prompt']):
+                    # If text is a list, it's a reference to another node [node_id, output_index]
+                    if isinstance(text, list) and len(text) >= 1:
+                        referenced_node_id = str(text[0])
+                        if referenced_node_id in prompt_data:
+                            referenced_node = prompt_data[referenced_node_id]
+                            referenced_inputs = referenced_node.get('inputs', {})
+                            text = referenced_inputs.get('text', '')
+
+                    if isinstance(text, str) and len(text) > len(metadata['positive_prompt']):
                         metadata['positive_prompt'] = text
 
-                # Extract negative prompt
+                # Extract negative prompt (check if it's a reference to another node)
                 if class_type in ['CLIPTextEncode', 'CLIPTextEncodeSDXL'] and self._is_negative_prompt(node_id, prompt_data):
                     text = inputs.get('text', '')
-                    if 'negative' in str(inputs).lower() or len(text) < len(metadata.get('positive_prompt', '')):
+                    # If text is a list, it's a reference to another node [node_id, output_index]
+                    if isinstance(text, list) and len(text) >= 1:
+                        referenced_node_id = str(text[0])
+                        if referenced_node_id in prompt_data:
+                            referenced_node = prompt_data[referenced_node_id]
+                            referenced_inputs = referenced_node.get('inputs', {})
+                            text = referenced_inputs.get('text', '')
+
+                    if isinstance(text, str):
                         metadata['negative_prompt'] = text
 
-                # Extract Lora loader information
-                if 'LoraLoader' in class_type or 'Lora' in class_type:
+                # Extract Lora loader information (standard LoraLoader)
+                if ('LoraLoader' in class_type or 'Lora' in class_type) and 'Power' not in class_type:
                     lora_info = {
                         'name': inputs.get('lora_name', inputs.get('name', 'Unknown')),
                         'strength_model': inputs.get('strength_model'),
                         'strength_clip': inputs.get('strength_clip'),
                     }
                     metadata['lora_nodes'].append(lora_info)
+
+                # Extract Power Lora Loader (rgthree) - multiple LoRAs in one node
+                if 'Power' in class_type and 'Lora' in class_type:
+                    # Power Lora Loader has lora_1, lora_2, lora_3, etc.
+                    for key, value in inputs.items():
+                        if key.startswith('lora_') and isinstance(value, dict):
+                            # Check if this lora is enabled
+                            if value.get('on', False):
+                                lora_info = {
+                                    'name': value.get('lora', 'Unknown'),
+                                    'strength_model': value.get('strength'),  # Power Lora uses single 'strength'
+                                    'strength_clip': value.get('strength'),   # Use same for both
+                                }
+                                metadata['lora_nodes'].append(lora_info)
 
                 # Extract checkpoint/model information
                 if 'CheckpointLoader' in class_type or 'ModelLoader' in class_type:
@@ -149,6 +179,8 @@ class ComfyUIMetadataExtractor:
 
         except Exception as e:
             print(f"Error parsing prompt data: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _is_positive_prompt(self, node_id: str, prompt_data: Dict) -> bool:
         """Check if a CLIP node is for positive prompt based on connections"""
