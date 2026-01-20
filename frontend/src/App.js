@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Container, Box, Typography, Paper, Snackbar, Alert } from '@mui/material';
-import FileUploader from './components/FileUploader';
+import { Container, Box, Typography, Paper, Snackbar, Alert, Button, Chip, CircularProgress } from '@mui/material';
+import { Refresh, Folder, CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 import ImageGallery from './components/ImageGallery';
 import Header from './components/Header';
-import { uploadFiles, getImages, downloadSelectedFiles, downloadAllFiles } from './services/api';
+import { getConfig, getImages, downloadSelectedFiles, downloadAllFiles } from './services/api';
 
 const theme = createTheme({
   palette: {
@@ -48,61 +48,46 @@ const theme = createTheme({
 
 function App() {
   const [images, setImages] = useState([]);
+  const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'info' });
 
-  // Load existing images when the component mounts
+  // Load config and images when the component mounts
   useEffect(() => {
+    fetchConfig();
     fetchImages();
   }, []);
 
+  const fetchConfig = async () => {
+    try {
+      const response = await getConfig();
+      if (response) {
+        setConfig(response);
+      }
+    } catch (error) {
+      console.error('Error fetching config:', error);
+      showAlert('Failed to load configuration.', 'error');
+    }
+  };
+
   const fetchImages = async () => {
+    setIsLoading(true);
     try {
       const response = await getImages();
       if (response && response.images) {
         setImages(response.images);
+        showAlert(`Loaded ${response.images.length} images from ComfyUI output folder.`, 'success');
       }
     } catch (error) {
       console.error('Error fetching images:', error);
       showAlert('Failed to load images. Please try again.', 'error');
-    }
-  };
-
-  const handleFilesUploaded = async (files) => {
-    setIsLoading(true);
-
-    try {
-      const response = await uploadFiles(files);
-
-      if (response && response.results) {
-        // Filter only successful uploads
-        const successfulUploads = response.results.filter(
-          result => result.status === 'uploaded'
-        );
-
-        if (successfulUploads.length > 0) {
-          // Refresh the list of images
-          await fetchImages();
-          showAlert(`Successfully uploaded ${successfulUploads.length} image${successfulUploads.length !== 1 ? 's' : ''}.`, 'success');
-        } else {
-          showAlert('No images were uploaded successfully.', 'warning');
-        }
-
-        // Check for errors
-        const errors = response.results.filter(result => result.status === 'error');
-        if (errors.length > 0) {
-          console.error('Upload errors:', errors);
-          if (errors.length === response.results.length) {
-            showAlert('Failed to upload any images. Please check file formats.', 'error');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error during upload:', error);
-      showAlert('Failed to upload images. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchImages();
   };
 
   const handleDownloadSelected = async (filenames) => {
@@ -156,10 +141,37 @@ function App() {
             </Typography>
           </Box>
 
+          {/* Folder Status */}
           <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-            <FileUploader onFilesUploaded={handleFilesUploaded} isLoading={isLoading} />
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Folder color="primary" />
+                  <Typography variant="body1" fontWeight={500}>
+                    {config?.comfyui_folder || 'Loading...'}
+                  </Typography>
+                </Box>
+                {config && (
+                  <Chip
+                    icon={config.folder_exists ? <CheckCircle /> : <ErrorIcon />}
+                    label={config.folder_exists ? 'Folder found' : 'Folder not found'}
+                    color={config.folder_exists ? 'success' : 'error'}
+                    size="small"
+                  />
+                )}
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Refresh />}
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Scanning...' : 'Refresh'}
+              </Button>
+            </Box>
           </Paper>
 
+          {/* Gallery */}
           {images.length > 0 ? (
             <Paper elevation={2} sx={{ p: 3 }}>
               <Typography variant="h5" gutterBottom fontWeight={600} sx={{ mb: 3 }}>
@@ -173,12 +185,25 @@ function App() {
             </Paper>
           ) : (
             <Paper elevation={2} sx={{ p: 6, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No images yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Upload your ComfyUI-generated images to get started
-              </Typography>
+              {isLoading ? (
+                <>
+                  <CircularProgress />
+                  <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+                    Scanning for images...
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No images found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {config?.folder_exists === false
+                      ? 'Folder not found: ' + (config?.comfyui_folder || 'undefined')
+                      : 'Add some images to your ComfyUI output folder and click Refresh'}
+                  </Typography>
+                </>
+              )}
             </Paper>
           )}
         </Box>

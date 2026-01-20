@@ -12,22 +12,12 @@ const api = axios.create({
 });
 
 // API functions
-export const uploadFiles = async (files) => {
-  const formData = new FormData();
-  
-  files.forEach(file => {
-    formData.append('files', file);
-  });
-  
+export const getConfig = async () => {
   try {
-    const response = await api.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.get('/config');
     return response.data;
   } catch (error) {
-    console.error('Error uploading files:', error);
+    console.error('Error getting config:', error);
     throw error;
   }
 };
