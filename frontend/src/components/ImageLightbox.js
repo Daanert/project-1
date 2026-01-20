@@ -71,7 +71,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
   };
 
   const handleDownload = () => {
-    const url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/download/${currentImage.filename}`;
+    const url = `/api/download/${currentImage.filename}`;
     window.open(url, '_blank');
   };
 
@@ -169,7 +169,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onIndexChange }) => {
           {/* Image */}
           <Box
             component="img"
-            src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}${currentImage.image_url}`}
+            src={currentImage.image_url}
             alt={currentImage.filename}
             sx={{
               maxWidth: '100%',

@@ -1,56 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Container, Box, Typography, Paper, Snackbar, Alert, Button, Chip, CircularProgress } from '@mui/material';
-import { Refresh, Folder, CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
+import { Container, Box, Typography, Paper, Snackbar, Alert, Button, Chip, CircularProgress, IconButton } from '@mui/material';
+import { Refresh, Folder, CheckCircle, Error as ErrorIcon, Brightness4, Brightness7 } from '@mui/icons-material';
 import ImageGallery from './components/ImageGallery';
 import Header from './components/Header';
 import { getConfig, getImages, downloadSelectedFiles, downloadAllFiles } from './services/api';
 
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#2196f3',
-    },
-    secondary: {
-      main: '#ff4081',
-    },
-    background: {
-      default: '#fafafa',
-      paper: '#ffffff',
-    },
-    success: {
-      main: '#4caf50',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-      },
-    },
-  },
-});
-
 function App() {
   const [images, setImages] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
   const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'info' });
+
+  // Create theme based on dark mode
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: darkMode ? 'dark' : 'light',
+          primary: {
+            main: '#2196f3',
+          },
+          secondary: {
+            main: '#ff4081',
+          },
+          success: {
+            main: '#4caf50',
+          },
+        },
+        typography: {
+          fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+        },
+        components: {
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                textTransform: 'none',
+                borderRadius: 8,
+              },
+            },
+          },
+          MuiPaper: {
+            styleOverrides: {
+              root: {
+                borderRadius: 12,
+              },
+            },
+          },
+        },
+      }),
+    [darkMode]
+  );
 
   // Load config and images when the component mounts
   useEffect(() => {
@@ -160,14 +162,27 @@ function App() {
                   />
                 )}
               </Box>
-              <Button
-                variant="contained"
-                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Refresh />}
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Scanning...' : 'Refresh'}
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton
+                  onClick={() => setDarkMode(!darkMode)}
+                  color="inherit"
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                  title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {darkMode ? <Brightness7 /> : <Brightness4 />}
+                </IconButton>
+                <Button
+                  variant="contained"
+                  startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <Refresh />}
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Scanning...' : 'Refresh'}
+                </Button>
+              </Box>
             </Box>
           </Paper>
 
