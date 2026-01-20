@@ -30,6 +30,11 @@ echo "🔨 Building frontend..."
 npm run build
 cd ..
 
+# Install proxy server dependencies
+echo ""
+echo "📦 Installing proxy server dependencies..."
+npm install
+
 # Create start script
 echo ""
 echo "📝 Creating start script..."
