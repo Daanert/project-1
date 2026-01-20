@@ -1,0 +1,13 @@
+{
+  "name": "comfyui-gallery",
+  "version": "1.0.0",
+  "description": "ComfyUI Image Gallery with lightbox and metadata viewer",
+  "main": "proxy-server.js",
+  "scripts": {
+    "start": "node proxy-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6"
+  }
+}
