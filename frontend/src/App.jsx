@@ -121,25 +121,25 @@ function App() {
 
   return (
     <div className={cn("min-h-screen transition-colors duration-300", darkMode ? "dark" : "")}>
-      {/* Header */}
+      {/* Header - responsive */}
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       >
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+        <div className="container mx-auto flex h-14 md:h-16 items-center justify-between px-3 md:px-4">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <motion.div
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.3 }}
-              className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg"
+              className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg"
             />
-            <h1 className="text-xl font-bold">ComfyUI Gallery</h1>
+            <h1 className="text-base md:text-xl font-bold">ComfyUI Gallery</h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Auto-sync toggle */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 md:gap-2">
               <motion.div
                 animate={isSyncing ? {
                   scale: [1, 1.3, 1],
@@ -152,7 +152,7 @@ function App() {
                 }}
               >
                 <Zap className={cn(
-                  "h-5 w-5 transition-colors",
+                  "h-4 w-4 md:h-5 md:w-5 transition-colors",
                   autoSync ? "text-primary" : "text-muted-foreground",
                   isSyncing && "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]"
                 )} />
@@ -160,20 +160,22 @@ function App() {
               <Switch
                 checked={autoSync}
                 onCheckedChange={setAutoSync}
+                className="scale-90 md:scale-100"
               />
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium hidden sm:inline">
                 {autoSync ? 'Auto' : 'Manual'}
               </span>
             </div>
 
             {/* Dark mode toggle */}
-            <div className="flex items-center gap-2">
-              <Sun className="h-4 w-4" />
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <Sun className="h-3.5 w-3.5 md:h-4 md:w-4" />
               <Switch
                 checked={darkMode}
                 onCheckedChange={setDarkMode}
+                className="scale-90 md:scale-100"
               />
-              <Moon className="h-4 w-4" />
+              <Moon className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </div>
 
             {/* Refresh button */}
@@ -182,10 +184,12 @@ function App() {
               size="sm"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3"
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-              {isLoading ? 'Scanning...' : 'Refresh'}
+              <RefreshCw className={cn("h-3.5 w-3.5 md:h-4 md:w-4", isLoading && "animate-spin")} />
+              <span className="hidden sm:inline text-xs md:text-sm">
+                {isLoading ? 'Scanning...' : 'Refresh'}
+              </span>
             </Button>
 
             {/* Download all button */}
@@ -193,73 +197,75 @@ function App() {
               <Button
                 size="sm"
                 onClick={handleDownloadAll}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1.5 h-8 md:h-9 px-2.5 md:px-3"
               >
-                <Download className="h-4 w-4" />
-                Download All
+                <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span className="hidden sm:inline text-xs md:text-sm">Download All</span>
               </Button>
             )}
           </div>
         </div>
       </motion.header>
 
-      {/* Main content */}
-      <main className="container mx-auto px-4 py-8">
+      {/* Main content - responsive */}
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         {/* Hero section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-center mb-8"
+          className="text-center mb-4 md:mb-8"
         >
-          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent pb-1">
+          <h2 className="text-2xl md:text-4xl font-bold mb-1 md:mb-2 bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent pb-1">
             ComfyUI Image Gallery
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-sm md:text-lg">
             View and manage your AI-generated images with metadata
           </p>
         </motion.div>
 
-        {/* Folder status card */}
+        {/* Folder status card - responsive */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="mb-4 md:mb-8"
         >
           <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Folder className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-sm">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 md:p-4 gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                <div className="flex items-center gap-2 min-w-0 max-w-full">
+                  <Folder className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" />
+                  <span className="font-medium text-xs md:text-sm truncate">
                     {config?.comfyui_folder || 'Loading...'}
                   </span>
                 </div>
                 {config && (
                   <div className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                    "flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-xs font-medium flex-shrink-0",
                     config.folder_exists
                       ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   )}>
                     {config.folder_exists ? (
                       <>
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Folder found
+                        <CheckCircle className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                        <span className="hidden sm:inline">Folder found</span>
+                        <span className="sm:hidden">Found</span>
                       </>
                     ) : (
                       <>
-                        <XCircle className="h-3.5 w-3.5" />
-                        Folder not found
+                        <XCircle className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                        <span className="hidden sm:inline">Folder not found</span>
+                        <span className="sm:hidden">Not found</span>
                       </>
                     )}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
                 {images.length > 0 && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">
                     {images.length} {images.length === 1 ? 'image' : 'images'}
                   </div>
                 )}
@@ -279,7 +285,7 @@ function App() {
                       ease: "easeInOut"
                     }}
                     className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                      "flex items-center gap-1 md:gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
                       isSyncing
                         ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                         : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
@@ -296,9 +302,9 @@ function App() {
                         ease: "linear"
                       }}
                     >
-                      <Zap className="h-3.5 w-3.5" />
+                      <Zap className="h-3 w-3 md:h-3.5 md:w-3.5" />
                     </motion.div>
-                    {isSyncing ? 'Syncing...' : 'Auto-sync'}
+                    <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : 'Auto-sync'}</span>
                   </motion.div>
                 )}
               </div>
