@@ -1,0 +1,283 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Moon, Sun, RefreshCw, Folder, CheckCircle, XCircle, Download } from 'lucide-react';
+import axios from 'axios';
+import ImageGallery from './components/ImageGallery';
+import ImageLightbox from './components/ImageLightbox';
+import { Button } from './components/ui/button';
+import { Card, CardContent } from './components/ui/card';
+import { Switch } from './components/ui/switch';
+import { cn } from './lib/utils';
+
+function App() {
+  const [images, setImages] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [config, setConfig] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+
+  // Apply dark mode class to document
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  // Load config and images when the component mounts
+  useEffect(() => {
+    fetchConfig();
+    fetchImages();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await axios.get('/api/config');
+      if (response.data) {
+        setConfig(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching config:', error);
+    }
+  };
+
+  const fetchImages = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get('/api/images');
+      if (response.data && response.data.images) {
+        setImages(response.data.images);
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchImages();
+  };
+
+  const handleDownloadAll = async () => {
+    if (images.length === 0) return;
+
+    try {
+      const response = await axios.get('/api/download-all', {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `all_images_${Date.now()}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading all images:', error);
+    }
+  };
+
+  const handleImageClick = (index) => {
+    setLightboxIndex(index);
+  };
+
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+  };
+
+  const navigateLightbox = (newIndex) => {
+    setLightboxIndex(newIndex);
+  };
+
+  return (
+    <div className={cn("min-h-screen transition-colors duration-300", darkMode ? "dark" : "")}>
+      {/* Header */}
+      <motion.header
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      >
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <motion.div
+              whileHover={{ rotate: 180 }}
+              transition={{ duration: 0.3 }}
+              className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg"
+            />
+            <h1 className="text-xl font-bold">ComfyUI Gallery</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Dark mode toggle */}
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4" />
+              <Switch
+                checked={darkMode}
+                onCheckedChange={setDarkMode}
+              />
+              <Moon className="h-4 w-4" />
+            </div>
+
+            {/* Refresh button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              {isLoading ? 'Scanning...' : 'Refresh'}
+            </Button>
+
+            {/* Download all button */}
+            {images.length > 0 && (
+              <Button
+                size="sm"
+                onClick={handleDownloadAll}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download All
+              </Button>
+            )}
+          </div>
+        </div>
+      </motion.header>
+
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-center mb-8"
+        >
+          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            ComfyUI Image Gallery
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            View and manage your AI-generated images with metadata
+          </p>
+        </motion.div>
+
+        {/* Folder status card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Folder className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-sm">
+                    {config?.comfyui_folder || 'Loading...'}
+                  </span>
+                </div>
+                {config && (
+                  <div className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                    config.folder_exists
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  )}>
+                    {config.folder_exists ? (
+                      <>
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Folder found
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-3.5 w-3.5" />
+                        Folder not found
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+              {images.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  {images.length} {images.length === 1 ? 'image' : 'images'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Gallery or loading state */}
+        <AnimatePresence mode="wait">
+          {isLoading && images.length === 0 ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-20"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-4"
+              />
+              <p className="text-muted-foreground">Scanning for images...</p>
+            </motion.div>
+          ) : images.length > 0 ? (
+            <motion.div
+              key="gallery"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ImageGallery
+                images={images}
+                onImageClick={handleImageClick}
+                darkMode={darkMode}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-20">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Folder className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No images found</h3>
+                  <p className="text-muted-foreground text-center max-w-md">
+                    {config?.folder_exists === false
+                      ? `Folder not found: ${config?.comfyui_folder || 'undefined'}`
+                      : 'Add some images to your ComfyUI output folder and click Refresh'}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={images}
+          currentIndex={lightboxIndex}
+          onClose={closeLightbox}
+          onNavigate={navigateLightbox}
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;
