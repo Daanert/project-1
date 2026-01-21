@@ -1,37 +1,43 @@
 #!/bin/bash
 
-# Safe stop script - only kills gallery processes
+# Ultra-safe stop script - only kills THIS gallery's processes using exact path matching
 
 echo "Stopping ComfyUI Gallery services..."
 
-# Find and kill only gallery-specific processes
-# Backend: python app.py in backend folder
-BACKEND_PID=$(ps aux | grep "python.*backend/app.py" | grep -v grep | awk '{print $2}')
+# Get the absolute path of this script's directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Backend: python app.py from THIS specific gallery directory
+BACKEND_PID=$(ps aux | grep "[p]ython.*${SCRIPT_DIR}/backend/app.py" | awk '{print $2}')
 if [ -n "$BACKEND_PID" ]; then
     echo "Stopping backend (PID: $BACKEND_PID)"
-    kill $BACKEND_PID
+    kill $BACKEND_PID 2>/dev/null
+    echo "✓ Backend stopped"
 else
-    echo "Backend not running"
+    echo "- Backend not running"
 fi
 
-# Frontend: npm start in frontend folder
-FRONTEND_PIDS=$(ps aux | grep "node.*frontend" | grep -v grep | awk '{print $2}')
+# Frontend: Find node processes from THIS specific directory only
+FRONTEND_PIDS=$(ps aux | grep "[n]ode" | grep "${SCRIPT_DIR}/frontend" | awk '{print $2}')
 if [ -n "$FRONTEND_PIDS" ]; then
-    echo "Stopping frontend"
+    echo "Stopping frontend processes"
     for pid in $FRONTEND_PIDS; do
-        kill $pid
+        kill $pid 2>/dev/null
     done
+    echo "✓ Frontend stopped"
 else
-    echo "Frontend not running"
+    echo "- Frontend not running"
 fi
 
-# Cloudflared tunnel
-TUNNEL_PID=$(ps aux | grep "cloudflared tunnel" | grep -v grep | awk '{print $2}')
+# Cloudflared tunnel - only if pointing to our specific port
+TUNNEL_PID=$(ps aux | grep "[c]loudflared tunnel --url http://localhost:3000" | awk '{print $2}')
 if [ -n "$TUNNEL_PID" ]; then
     echo "Stopping tunnel (PID: $TUNNEL_PID)"
-    kill $TUNNEL_PID
+    kill $TUNNEL_PID 2>/dev/null
+    echo "✓ Tunnel stopped"
 else
-    echo "Tunnel not running"
+    echo "- Tunnel not running"
 fi
 
-echo "Done!"
+echo ""
+echo "✅ Gallery services stopped"
