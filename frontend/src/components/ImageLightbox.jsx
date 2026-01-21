@@ -93,7 +93,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       >
         <div className="flex h-full">
@@ -103,15 +103,17 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
               "flex-1 flex items-center justify-center p-8 transition-all duration-300",
               showMetadata ? "mr-96" : "mr-0"
             )}
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="relative w-full h-full flex items-center justify-center">
               {/* Navigation buttons */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white"
-                onClick={handlePrevious}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevious();
+                }}
                 disabled={currentIndex === 0}
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -120,8 +122,11 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white"
-                onClick={handleNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNext();
+                }}
                 disabled={currentIndex === images.length - 1}
               >
                 <ChevronRight className="w-6 h-6" />
@@ -137,22 +142,26 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                 src={currentImage.image_url}
                 alt={currentImage.filename}
                 className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
               />
 
               {/* Top toolbar */}
-              <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                <div className="bg-background/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 pointer-events-none">
+                <div className="bg-background/10 backdrop-blur-sm rounded-lg px-4 py-2 pointer-events-auto">
                   <p className="text-white text-sm font-medium">
                     {currentIndex + 1} / {images.length}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pointer-events-auto">
                   <Button
                     variant="ghost"
                     size="icon"
                     className="bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white"
-                    onClick={handleDownload}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload();
+                    }}
                   >
                     <Download className="w-5 h-5" />
                   </Button>
@@ -161,7 +170,10 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                     variant="ghost"
                     size="icon"
                     className="bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white"
-                    onClick={() => setShowMetadata(!showMetadata)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMetadata(!showMetadata);
+                    }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -182,7 +194,10 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                     variant="ghost"
                     size="icon"
                     className="bg-background/10 backdrop-blur-sm hover:bg-background/20 text-white"
-                    onClick={onClose}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClose();
+                    }}
                   >
                     <X className="w-5 h-5" />
                   </Button>
@@ -190,7 +205,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
               </div>
 
               {/* Bottom filename */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/10 backdrop-blur-sm rounded-lg px-4 py-2 z-10 pointer-events-none">
                 <p className="text-white text-sm">{currentImage.filename}</p>
               </div>
             </div>

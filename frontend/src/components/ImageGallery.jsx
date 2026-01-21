@@ -89,7 +89,7 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
     return (
       <motion.div
         style={wrapperStyle}
-        className="relative group cursor-pointer"
+        className="relative group cursor-pointer overflow-hidden rounded-lg"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
@@ -101,41 +101,40 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
         }}
       >
         {/* Image */}
-        <div className="relative overflow-hidden rounded-lg">
-          <img
-            src={photo.src}
-            alt={photo.title}
-            className={cn(
-              "w-full h-full object-cover transition-all duration-300",
-              isSelected && "ring-4 ring-primary",
-              "group-hover:scale-105"
-            )}
-            style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
-          />
+        <motion.img
+          src={photo.src}
+          alt={photo.title}
+          className={cn(
+            "w-full h-full object-cover",
+            isSelected && "ring-4 ring-primary"
+          )}
+          style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
 
-          {/* Overlay on hover */}
-          <AnimatePresence>
-            {(isHovered || isSelected) && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/40 flex items-start justify-end p-2"
+        {/* Overlay on hover */}
+        <AnimatePresence>
+          {(isHovered || isSelected) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 flex items-start justify-end p-2"
+            >
+              <button
+                onClick={(e) => handleImageSelect(e, photo.key)}
+                className="bg-background/90 backdrop-blur-sm p-2 rounded-md hover:bg-background transition-colors z-10"
               >
-                <button
-                  onClick={(e) => handleImageSelect(e, photo.key)}
-                  className="bg-background/90 backdrop-blur-sm p-2 rounded-md hover:bg-background transition-colors"
-                >
-                  {isSelected ? (
-                    <CheckSquare className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Square className="w-5 h-5" />
-                  )}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                {isSelected ? (
+                  <CheckSquare className="w-5 h-5 text-primary" />
+                ) : (
+                  <Square className="w-5 h-5" />
+                )}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   };
