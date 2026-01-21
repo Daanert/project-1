@@ -16,13 +16,18 @@ CORS(app)
 # Configuration
 # Auto-detect: use /ComfyUI/output on Vast.ai, or placeholder_images locally
 DEFAULT_LOCAL_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'placeholder_images')
-VASTAI_COMFYUI_FOLDER = '/ComfyUI/output'
+VASTAI_COMFYUI_FOLDERS = ['/ComfyUI/output', '/workspace/ComfyUI/output']
 
-# Smart detection: if Vast.ai folder exists, use it; otherwise use local
-if os.path.exists(VASTAI_COMFYUI_FOLDER):
-    COMFYUI_OUTPUT_FOLDER = VASTAI_COMFYUI_FOLDER
-    print(f"🚀 Detected Vast.ai - Using: {COMFYUI_OUTPUT_FOLDER}")
-else:
+# Smart detection: check multiple possible Vast.ai locations
+COMFYUI_OUTPUT_FOLDER = None
+for folder in VASTAI_COMFYUI_FOLDERS:
+    if os.path.exists(folder):
+        COMFYUI_OUTPUT_FOLDER = folder
+        print(f"🚀 Detected Vast.ai - Using: {COMFYUI_OUTPUT_FOLDER}")
+        break
+
+# Fall back to local mode if no Vast.ai folder found
+if COMFYUI_OUTPUT_FOLDER is None:
     COMFYUI_OUTPUT_FOLDER = os.environ.get('COMFYUI_OUTPUT_FOLDER', DEFAULT_LOCAL_FOLDER)
     print(f"💻 Local mode - Using: {COMFYUI_OUTPUT_FOLDER}")
 THUMBNAILS_FOLDER = os.path.join(tempfile.gettempdir(), 'comfyui_gallery_thumbnails')
