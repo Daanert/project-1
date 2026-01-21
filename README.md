@@ -117,6 +117,128 @@ npm start
 
 The frontend will run on `http://localhost:3000`
 
+## 🚀 Vast.ai Deployment (One-Command Setup)
+
+Deploy the ComfyUI Gallery on Vast.ai with automatic ComfyUI folder detection and public tunnel access.
+
+### Quick Start
+
+1. **Clone the repository on your Vast.ai instance:**
+```bash
+cd /workspace
+git clone https://github.com/Daanert/project-1.git comfyui-gallery
+cd comfyui-gallery
+```
+
+2. **Run the deployment script:**
+```bash
+chmod +x deploy-vastai.sh
+./deploy-vastai.sh
+```
+
+That's it! The script will:
+- ✅ Automatically detect your ComfyUI output folder (`/ComfyUI/output` or `/workspace/ComfyUI/output`)
+- ✅ Install all Python and Node.js dependencies
+- ✅ Start the backend (Flask) and frontend (React)
+- ✅ Create a Cloudflare tunnel for public access
+- ✅ Display a public URL to share your gallery
+
+### Features for Vast.ai
+
+**Automatic ComfyUI Detection**
+The backend automatically detects your ComfyUI installation:
+- Checks for `/ComfyUI/output` (standard Vast.ai location)
+- Falls back to `/workspace/ComfyUI/output` if needed
+- Uses placeholder images if ComfyUI isn't found
+- No manual configuration required!
+
+**Safe Process Management**
+All scripts are designed to safely stop only gallery processes:
+```bash
+# Stop all gallery services safely
+./stop-gallery.sh
+
+# Or use the alternative
+./stop-all.sh
+```
+
+These scripts won't kill your Vast.ai instance or other running services.
+
+**Alternative Start Options**
+
+If you want to run without tunnel (local testing):
+```bash
+./start-all.sh
+```
+
+To run with tunnel (public access):
+```bash
+./start-all.sh tunnel
+```
+
+### Accessing Your Gallery
+
+**With Tunnel (Recommended for Vast.ai):**
+- The `deploy-vastai.sh` script automatically starts a Cloudflare tunnel
+- Look for the public URL in the terminal output (e.g., `https://xxxxx.trycloudflare.com`)
+- Share this URL to access your gallery from anywhere
+- Press Ctrl+C to stop all services
+
+**Without Tunnel (Local only):**
+- Backend: `http://localhost:5000`
+- Frontend: `http://localhost:3000`
+- Use Vast.ai's port forwarding to access from outside
+
+### Troubleshooting
+
+**Check logs:**
+```bash
+# Backend logs
+tail -f /tmp/gallery_backend.log
+
+# Frontend logs
+tail -f /tmp/gallery_frontend.log
+```
+
+**No images showing up?**
+- Verify ComfyUI output folder exists: `ls -la /ComfyUI/output`
+- Check if folder is detected in deployment script output
+- Restart services: `./stop-all.sh && ./deploy-vastai.sh`
+
+**Services won't start?**
+- Make sure ports 3000 and 5000 aren't already in use
+- Check logs for specific error messages
+- Verify all dependencies installed correctly
+
+### Manual Deployment Steps
+
+If you prefer manual control:
+
+```bash
+# 1. Install backend dependencies
+cd backend
+pip install -r requirements.txt
+cd ..
+
+# 2. Install frontend dependencies
+cd frontend
+npm install
+cd ..
+
+# 3. Start backend
+cd backend
+python3 app.py > /tmp/gallery_backend.log 2>&1 &
+cd ..
+
+# 4. Start frontend
+cd frontend
+PORT=3000 npm start > /tmp/gallery_frontend.log 2>&1 &
+cd ..
+
+# 5. Start tunnel
+cloudflared tunnel --url http://localhost:3000
+```
+
 ## Usage
 
 1. **Upload Images**
