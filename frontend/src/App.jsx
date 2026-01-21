@@ -140,7 +140,23 @@ function App() {
           <div className="flex items-center gap-4">
             {/* Auto-sync toggle */}
             <div className="flex items-center gap-2">
-              <Zap className={cn("h-4 w-4", autoSync && "text-primary", isSyncing && "animate-pulse")} />
+              <motion.div
+                animate={isSyncing ? {
+                  scale: [1, 1.3, 1],
+                  rotate: [0, 180, 360],
+                } : {}}
+                transition={{
+                  duration: 0.6,
+                  repeat: isSyncing ? Infinity : 0,
+                  ease: "easeInOut"
+                }}
+              >
+                <Zap className={cn(
+                  "h-5 w-5 transition-colors",
+                  autoSync ? "text-primary" : "text-muted-foreground",
+                  isSyncing && "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]"
+                )} />
+              </motion.div>
               <Switch
                 checked={autoSync}
                 onCheckedChange={setAutoSync}
@@ -248,13 +264,42 @@ function App() {
                   </div>
                 )}
                 {autoSync && (
-                  <div className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                  )}>
-                    <Zap className={cn("h-3.5 w-3.5", isSyncing && "animate-pulse")} />
-                    Auto-sync
-                  </div>
+                  <motion.div
+                    animate={isSyncing ? {
+                      scale: [1, 1.05, 1],
+                      boxShadow: [
+                        "0 0 0 0 rgba(59, 130, 246, 0)",
+                        "0 0 0 4px rgba(59, 130, 246, 0.3)",
+                        "0 0 0 0 rgba(59, 130, 246, 0)"
+                      ]
+                    } : {}}
+                    transition={{
+                      duration: 1.5,
+                      repeat: isSyncing ? Infinity : 0,
+                      ease: "easeInOut"
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                      isSyncing
+                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    )}
+                  >
+                    <motion.div
+                      animate={isSyncing ? {
+                        rotate: [0, 360],
+                        scale: [1, 1.2, 1]
+                      } : {}}
+                      transition={{
+                        duration: 1,
+                        repeat: isSyncing ? Infinity : 0,
+                        ease: "linear"
+                      }}
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                    </motion.div>
+                    {isSyncing ? 'Syncing...' : 'Auto-sync'}
+                  </motion.div>
                 )}
               </div>
             </CardContent>
