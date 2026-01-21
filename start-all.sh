@@ -74,13 +74,21 @@ if [ "$TUNNEL_MODE" = "tunnel" ]; then
     echo "   Press Ctrl+C to stop all services"
     echo ""
 
-    # Cleanup function
+    # Cleanup function - only kill our specific PIDs
     cleanup() {
         echo ""
         echo "Stopping services..."
-        kill $BACKEND_PID 2>/dev/null || true
-        kill $FRONTEND_PID 2>/dev/null || true
-        pkill -f cloudflared 2>/dev/null || true
+        if [ -n "$BACKEND_PID" ]; then
+            kill $BACKEND_PID 2>/dev/null || true
+        fi
+        if [ -n "$FRONTEND_PID" ]; then
+            kill $FRONTEND_PID 2>/dev/null || true
+        fi
+        # Kill only our cloudflared tunnel process
+        TUNNEL_PID=$(ps aux | grep "cloudflared tunnel --url http://localhost:$FRONTEND_PORT" | grep -v grep | awk '{print $2}')
+        if [ -n "$TUNNEL_PID" ]; then
+            kill $TUNNEL_PID 2>/dev/null || true
+        fi
         echo "All services stopped."
         exit 0
     }
