@@ -3,3 +3,4 @@ Werkzeug==2.3.7
 Pillow==10.0.1
 Flask-Cors==4.0.0
 gunicorn==21.2.0
+watchdog==3.0.0

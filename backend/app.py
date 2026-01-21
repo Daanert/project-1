@@ -4,11 +4,15 @@ import os
 import tempfile
 import zipfile
 import time
+import threading
 from werkzeug.utils import secure_filename
 from comfyui_metadata import ComfyUIMetadataExtractor
 from PIL import Image
 import json
 import hashlib
+from datetime import datetime
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 app = Flask(__name__)
 CORS(app)
@@ -156,21 +160,52 @@ def health_check():
 @app.route('/api/config', methods=['GET'])
 def get_config():
     """Get application configuration"""
+    # Count images in folder
+    image_count = 0
+    if os.path.exists(COMFYUI_OUTPUT_FOLDER):
+        for root, dirs, files in os.walk(COMFYUI_OUTPUT_FOLDER):
+            for filename in files:
+                if allowed_file(filename):
+                    image_count += 1
+
     return jsonify({
         'comfyui_folder': COMFYUI_OUTPUT_FOLDER,
         'folder_exists': os.path.exists(COMFYUI_OUTPUT_FOLDER),
-        'thumbnail_quality': THUMBNAIL_QUALITY
+        'thumbnail_quality': THUMBNAIL_QUALITY,
+        'image_count': image_count,
+        'last_scan': _last_scan_time.isoformat(),
+        'watching': observer is not None and observer.is_alive()
+    }), 200
+
+
+@app.route('/api/refresh', methods=['POST'])
+def manual_refresh():
+    """Manually trigger a cache refresh"""
+    global _last_scan_time
+    with _scan_lock:
+        print(f"🔄 Manual refresh requested")
+        update_image_cache()
+        _last_scan_time = datetime.now()
+
+    images = scan_comfyui_output()
+    return jsonify({
+        'success': True,
+        'image_count': len(images),
+        'last_scan': _last_scan_time.isoformat()
     }), 200
 
 
 @app.route('/api/images', methods=['GET'])
 def list_images():
     """List all images from ComfyUI output folder"""
+    print(f"📋 Listing images from: {COMFYUI_OUTPUT_FOLDER}")
     images = scan_comfyui_output()
+    print(f"✅ Returning {len(images)} images")
     return jsonify({
         'images': images,
         'count': len(images),
-        'folder': COMFYUI_OUTPUT_FOLDER
+        'folder': COMFYUI_OUTPUT_FOLDER,
+        'last_scan': _last_scan_time.isoformat()
     }), 200
 
 
@@ -196,6 +231,56 @@ def update_image_cache():
 
 # Initialize cache on startup
 update_image_cache()
+
+# Last scan timestamp for tracking
+_last_scan_time = datetime.now()
+_scan_lock = threading.Lock()
+
+
+class ComfyUIFolderHandler(FileSystemEventHandler):
+    """Watchdog handler for monitoring ComfyUI output folder"""
+
+    def on_created(self, event):
+        """Called when a file is created"""
+        if not event.is_directory and allowed_file(event.src_path):
+            print(f"🆕 New image detected: {os.path.basename(event.src_path)}")
+            # Update cache after a short delay (to ensure file is fully written)
+            threading.Timer(2.0, self._update_cache).start()
+
+    def on_deleted(self, event):
+        """Called when a file is deleted"""
+        if not event.is_directory and allowed_file(event.src_path):
+            print(f"🗑️  Image deleted: {os.path.basename(event.src_path)}")
+            self._update_cache()
+
+    def on_modified(self, event):
+        """Called when a file is modified"""
+        if not event.is_directory and allowed_file(event.src_path):
+            print(f"✏️  Image modified: {os.path.basename(event.src_path)}")
+            threading.Timer(2.0, self._update_cache).start()
+
+    def _update_cache(self):
+        """Thread-safe cache update"""
+        global _last_scan_time
+        with _scan_lock:
+            print(f"♻️  Refreshing image cache...")
+            update_image_cache()
+            _last_scan_time = datetime.now()
+            print(f"✅ Cache refreshed at {_last_scan_time.strftime('%H:%M:%S')}")
+
+
+# Start watchdog observer if ComfyUI folder exists
+observer = None
+if os.path.exists(COMFYUI_OUTPUT_FOLDER):
+    try:
+        event_handler = ComfyUIFolderHandler()
+        observer = Observer()
+        observer.schedule(event_handler, COMFYUI_OUTPUT_FOLDER, recursive=True)
+        observer.start()
+        print(f"👁️  Watching folder: {COMFYUI_OUTPUT_FOLDER}")
+    except Exception as e:
+        print(f"⚠️  Could not start folder monitoring: {e}")
+        print("   Falling back to manual refresh mode")
 
 
 @app.route('/api/thumbnail/<filename>', methods=['GET'])
@@ -382,4 +467,24 @@ def download_all():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        print(f"\n{'='*50}")
+        print(f"🎨 ComfyUI Gallery Backend Starting")
+        print(f"{'='*50}")
+        print(f"📁 Folder: {COMFYUI_OUTPUT_FOLDER}")
+        print(f"✅ Folder exists: {os.path.exists(COMFYUI_OUTPUT_FOLDER)}")
+        print(f"👁️  Watching: {observer is not None and observer.is_alive()}")
+
+        # Initial scan
+        images = scan_comfyui_output()
+        print(f"📸 Images found: {len(images)}")
+        print(f"{'='*50}\n")
+
+        app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    except KeyboardInterrupt:
+        print("\n🛑 Shutting down...")
+    finally:
+        if observer:
+            observer.stop()
+            observer.join()
+            print("👋 Watchdog stopped")
