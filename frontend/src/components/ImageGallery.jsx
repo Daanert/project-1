@@ -11,6 +11,7 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
   const [selectedImages, setSelectedImages] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [hoveredImage, setHoveredImage] = useState(null);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
 
   useEffect(() => {
     fetchImages();
@@ -30,13 +31,35 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
 
   const handleImageSelect = (e, filename) => {
     e.stopPropagation();
+
+    const currentIndex = images.findIndex(img => img.filename === filename);
     const newSelected = new Set(selectedImages);
-    if (newSelected.has(filename)) {
-      newSelected.delete(filename);
-    } else {
-      newSelected.add(filename);
+
+    // Shift+click: select range
+    if (e.shiftKey && lastSelectedIndex !== null) {
+      const start = Math.min(lastSelectedIndex, currentIndex);
+      const end = Math.max(lastSelectedIndex, currentIndex);
+
+      // Select all images in range
+      for (let i = start; i <= end; i++) {
+        newSelected.add(images[i].filename);
+      }
+
+      setSelectedImages(newSelected);
+      setLastSelectedIndex(currentIndex);
     }
-    setSelectedImages(newSelected);
+    // Normal click: toggle single image
+    else {
+      if (newSelected.has(filename)) {
+        newSelected.delete(filename);
+        // If deselecting, clear last selected index
+        setLastSelectedIndex(null);
+      } else {
+        newSelected.add(filename);
+        setLastSelectedIndex(currentIndex);
+      }
+      setSelectedImages(newSelected);
+    }
   };
 
   const handleDownloadSelected = async () => {
@@ -65,8 +88,11 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
   const handleSelectAll = () => {
     if (selectedImages.size === images.length) {
       setSelectedImages(new Set());
+      setLastSelectedIndex(null);
     } else {
       setSelectedImages(new Set(images.map(img => img.filename)));
+      // Set last index to the last image when selecting all
+      setLastSelectedIndex(images.length - 1);
     }
   };
 
