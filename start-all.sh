@@ -13,30 +13,21 @@ echo "==================================="
 echo "ComfyUI Image Gallery"
 echo "==================================="
 echo ""
-echo "Checking ComfyUI output folder..."
 
 # Check if ComfyUI output folder exists
-if [ -d "/workspace/ComfyUI/output" ]; then
+if [ -d "/ComfyUI/output" ]; then
+    IMAGE_COUNT=$(find /ComfyUI/output -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) | wc -l)
+    echo "✅ Found /ComfyUI/output with $IMAGE_COUNT images"
+elif [ -d "/workspace/ComfyUI/output" ]; then
     IMAGE_COUNT=$(find /workspace/ComfyUI/output -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) | wc -l)
-    echo "✓ ComfyUI folder found: /workspace/ComfyUI/output"
-    echo "  Found $IMAGE_COUNT images"
+    echo "✅ Found /workspace/ComfyUI/output with $IMAGE_COUNT images"
 else
-    echo "⚠️  Warning: /workspace/ComfyUI/output not found"
-    echo "  The gallery will start but show no images until this folder exists"
+    echo "⚠️  ComfyUI output folder not found - will use placeholder images"
 fi
 
 echo ""
 echo "Starting services..."
 echo ""
-
-# Build frontend if needed
-if [ ! -d "frontend/build" ]; then
-    echo "📦 Building frontend (first time only)..."
-    cd frontend
-    npm run build
-    cd ..
-    echo ""
-fi
 
 # Start backend
 echo "🔧 Starting Flask backend on port $BACKEND_PORT..."
@@ -46,7 +37,7 @@ BACKEND_PID=$!
 cd ..
 
 # Wait for backend to start
-sleep 2
+sleep 3
 
 # Check if backend started successfully
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
@@ -54,29 +45,27 @@ if ! kill -0 $BACKEND_PID 2>/dev/null; then
     exit 1
 fi
 
-echo "✓ Backend started (PID: $BACKEND_PID)"
-echo "  Logs: /tmp/gallery_backend.log"
-echo "  URL: http://localhost:$BACKEND_PORT"
+echo "✅ Backend started (PID: $BACKEND_PID)"
 
-# Start proxy server
+# Start React dev server
 echo ""
-echo "🌐 Starting proxy server on port $FRONTEND_PORT..."
-node proxy-server.js > /tmp/gallery_frontend.log 2>&1 &
-PROXY_PID=$!
+echo "🎨 Starting React dev server on port $FRONTEND_PORT..."
+cd frontend
+PORT=$FRONTEND_PORT npm start > /tmp/gallery_frontend.log 2>&1 &
+FRONTEND_PID=$!
+cd ..
 
-# Wait for proxy to start
-sleep 2
+# Wait for frontend to compile
+sleep 10
 
-# Check if proxy started successfully
-if ! kill -0 $PROXY_PID 2>/dev/null; then
-    echo "❌ Proxy server failed to start. Check /tmp/gallery_frontend.log"
+# Check if frontend started successfully
+if ! kill -0 $FRONTEND_PID 2>/dev/null; then
+    echo "❌ Frontend failed to start. Check /tmp/gallery_frontend.log"
     kill $BACKEND_PID 2>/dev/null
     exit 1
 fi
 
-echo "✓ Proxy server started (PID: $PROXY_PID)"
-echo "  Logs: /tmp/gallery_frontend.log"
-echo "  URL: http://localhost:$FRONTEND_PORT"
+echo "✅ Frontend started (PID: $FRONTEND_PID)"
 
 # Start tunnel if requested
 if [ "$TUNNEL_MODE" = "tunnel" ]; then
@@ -90,7 +79,7 @@ if [ "$TUNNEL_MODE" = "tunnel" ]; then
         echo ""
         echo "Stopping services..."
         kill $BACKEND_PID 2>/dev/null || true
-        kill $PROXY_PID 2>/dev/null || true
+        kill $FRONTEND_PID 2>/dev/null || true
         pkill -f cloudflared 2>/dev/null || true
         echo "All services stopped."
         exit 0
@@ -108,17 +97,14 @@ else
     echo "✅ Gallery is running!"
     echo "==================================="
     echo ""
-    echo "  📱 Open in browser: http://localhost:$FRONTEND_PORT"
-    echo ""
-    echo "  Backend: http://localhost:$BACKEND_PORT"
-    echo "  Frontend: http://localhost:$FRONTEND_PORT"
+    echo "  📱 Open: http://localhost:$FRONTEND_PORT"
     echo ""
     echo "  📊 Logs:"
     echo "    Backend:  tail -f /tmp/gallery_backend.log"
     echo "    Frontend: tail -f /tmp/gallery_frontend.log"
     echo ""
-    echo "  🛑 To stop services:"
-    echo "    kill $BACKEND_PID $PROXY_PID"
+    echo "  🛑 To stop:"
+    echo "    kill $BACKEND_PID $FRONTEND_PID"
     echo ""
     echo "  🌍 To start with tunnel:"
     echo "    ./start-all.sh tunnel"
