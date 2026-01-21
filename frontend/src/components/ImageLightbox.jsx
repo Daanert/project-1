@@ -132,8 +132,8 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
             )}
           >
             <div className="relative w-full h-full flex items-center justify-center">
-              {/* Navigation buttons - larger on mobile */}
-              {!isMobile && (
+              {/* Navigation buttons - hide on mobile and tablet, show on desktop */}
+              {!isMobile && !isTablet && (
                 <>
                   <Button
                     variant="ghost"
@@ -170,7 +170,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                drag={isMobile ? "x" : false}
+                drag={isMobile || isTablet ? "x" : false}
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
                 onDragEnd={handleDragEnd}
@@ -178,7 +178,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                 alt={currentImage.filename}
                 className={cn(
                   "max-w-full object-contain rounded-lg touch-pan-y",
-                  isMobile ? "max-h-[70vh]" : "max-h-full"
+                  isMobile || isTablet ? "max-h-[80vh]" : "max-h-full"
                 )}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -245,8 +245,8 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                 </div>
               </div>
 
-              {/* Bottom navigation and filename - mobile only */}
-              {isMobile && (
+              {/* Bottom navigation and filename - mobile and tablet */}
+              {(isMobile || isTablet) && (
                 <div className="absolute bottom-2 left-0 right-0 px-2 flex items-center justify-between z-10 pointer-events-none">
                   <Button
                     variant="ghost"
@@ -281,7 +281,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
               )}
 
               {/* Desktop filename */}
-              {!isMobile && (
+              {!isMobile && !isTablet && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/10 backdrop-blur-sm rounded-lg px-4 py-2 z-10 pointer-events-none max-w-[80%]">
                   <p className="text-white text-sm truncate">{currentImage.filename}</p>
                 </div>
