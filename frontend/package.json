@@ -1,7 +1,8 @@
 {
-  "name": "msg-to-pdf-converter",
+  "name": "comfyui-image-gallery",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:5000",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

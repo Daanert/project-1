@@ -14,7 +14,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuration
-COMFYUI_OUTPUT_FOLDER = '/workspace/ComfyUI/output'
+# Use environment variable or default to local placeholder_images folder
+DEFAULT_LOCAL_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'placeholder_images')
+COMFYUI_OUTPUT_FOLDER = os.environ.get('COMFYUI_OUTPUT_FOLDER', DEFAULT_LOCAL_FOLDER)
 THUMBNAILS_FOLDER = os.path.join(tempfile.gettempdir(), 'comfyui_gallery_thumbnails')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 THUMBNAIL_QUALITY = 80
