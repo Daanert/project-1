@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, RefreshCw, Folder, CheckCircle, XCircle, Download } from 'lucide-react';
+import { Moon, Sun, RefreshCw, Folder, CheckCircle, XCircle, Download, Zap } from 'lucide-react';
 import axios from 'axios';
 import ImageGallery from './components/ImageGallery';
 import ImageLightbox from './components/ImageLightbox';
@@ -15,6 +15,8 @@ function App() {
   const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [autoSync, setAutoSync] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Apply dark mode class to document
   useEffect(() => {
@@ -30,6 +32,30 @@ function App() {
     fetchConfig();
     fetchImages();
   }, []);
+
+  // Auto-sync functionality - poll for new images every 5 seconds
+  useEffect(() => {
+    if (!autoSync) return;
+
+    const interval = setInterval(async () => {
+      setIsSyncing(true);
+      try {
+        const response = await axios.get('/api/images');
+        if (response.data && response.data.images) {
+          // Only update if the count changed or images are different
+          if (response.data.images.length !== images.length) {
+            setImages(response.data.images);
+          }
+        }
+      } catch (error) {
+        console.error('Error syncing images:', error);
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [autoSync, images.length]);
 
   const fetchConfig = async () => {
     try {
@@ -112,6 +138,18 @@ function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Auto-sync toggle */}
+            <div className="flex items-center gap-2">
+              <Zap className={cn("h-4 w-4", autoSync && "text-primary", isSyncing && "animate-pulse")} />
+              <Switch
+                checked={autoSync}
+                onCheckedChange={setAutoSync}
+              />
+              <span className="text-xs font-medium">
+                {autoSync ? 'Auto' : 'Manual'}
+              </span>
+            </div>
+
             {/* Dark mode toggle */}
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4" />
@@ -203,11 +241,22 @@ function App() {
                   </div>
                 )}
               </div>
-              {images.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  {images.length} {images.length === 1 ? 'image' : 'images'}
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                {images.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    {images.length} {images.length === 1 ? 'image' : 'images'}
+                  </div>
+                )}
+                {autoSync && (
+                  <div className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  )}>
+                    <Zap className={cn("h-3.5 w-3.5", isSyncing && "animate-pulse")} />
+                    Auto-sync
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </motion.div>
