@@ -32,6 +32,27 @@ fi
 
 echo ""
 echo "========================================"
+echo " Configuring for Cloudflare Tunnel"
+echo "========================================"
+echo ""
+
+# Create .env file to disable host check for Cloudflare tunnel
+if [ ! -f "frontend/.env" ]; then
+    echo "📝 Creating frontend .env configuration..."
+    echo "DANGEROUSLY_DISABLE_HOST_CHECK=true" > frontend/.env
+    echo "✅ Frontend configured for tunnel access"
+else
+    # Make sure the setting is present
+    if ! grep -q "DANGEROUSLY_DISABLE_HOST_CHECK=true" frontend/.env; then
+        echo "DANGEROUSLY_DISABLE_HOST_CHECK=true" >> frontend/.env
+        echo "✅ Frontend configured for tunnel access"
+    else
+        echo "✅ Frontend already configured for tunnel access"
+    fi
+fi
+
+echo ""
+echo "========================================"
 echo " Installing Dependencies"
 echo "========================================"
 echo ""
