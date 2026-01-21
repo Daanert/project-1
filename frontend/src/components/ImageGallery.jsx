@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhotoAlbum } from 'react-photo-album';
 import { Download, CheckSquare, Square } from 'lucide-react';
@@ -6,28 +6,10 @@ import axios from 'axios';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
-const ImageGallery = ({ onImageClick, darkMode }) => {
-  const [images, setImages] = useState([]);
+const ImageGallery = ({ images, onImageClick, darkMode }) => {
   const [selectedImages, setSelectedImages] = useState(new Set());
-  const [loading, setLoading] = useState(true);
   const [hoveredImage, setHoveredImage] = useState(null);
   const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
-
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  const fetchImages = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/images');
-      setImages(response.data.images || []);
-    } catch (error) {
-      console.error('Error fetching images:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleImageSelect = (e, filename) => {
     e.stopPropagation();
@@ -165,19 +147,7 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
-
-  if (images.length === 0) {
+  if (!images || images.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
