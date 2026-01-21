@@ -14,9 +14,17 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuration
-# Use environment variable or default to local placeholder_images folder
+# Auto-detect: use /ComfyUI/output on Vast.ai, or placeholder_images locally
 DEFAULT_LOCAL_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'placeholder_images')
-COMFYUI_OUTPUT_FOLDER = os.environ.get('COMFYUI_OUTPUT_FOLDER', DEFAULT_LOCAL_FOLDER)
+VASTAI_COMFYUI_FOLDER = '/ComfyUI/output'
+
+# Smart detection: if Vast.ai folder exists, use it; otherwise use local
+if os.path.exists(VASTAI_COMFYUI_FOLDER):
+    COMFYUI_OUTPUT_FOLDER = VASTAI_COMFYUI_FOLDER
+    print(f"🚀 Detected Vast.ai - Using: {COMFYUI_OUTPUT_FOLDER}")
+else:
+    COMFYUI_OUTPUT_FOLDER = os.environ.get('COMFYUI_OUTPUT_FOLDER', DEFAULT_LOCAL_FOLDER)
+    print(f"💻 Local mode - Using: {COMFYUI_OUTPUT_FOLDER}")
 THUMBNAILS_FOLDER = os.path.join(tempfile.gettempdir(), 'comfyui_gallery_thumbnails')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 THUMBNAIL_QUALITY = 80
