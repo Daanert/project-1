@@ -158,7 +158,7 @@ function App() {
           transition={{ delay: 0.1 }}
           className="text-center mb-8"
         >
-          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-blue-500 to-cyan-500 bg-clip-text text-transparent pb-1">
             ComfyUI Image Gallery
           </h2>
           <p className="text-muted-foreground text-lg">

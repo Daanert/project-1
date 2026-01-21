@@ -173,7 +173,7 @@ const ImageGallery = ({ onImageClick, darkMode }) => {
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-card border rounded-lg shadow-lg p-4 flex items-center gap-4"
+            className="fixed top-52 left-1/2 -translate-x-1/2 z-50 bg-card border rounded-lg shadow-lg p-4 flex items-center gap-4"
           >
             <span className="text-sm font-medium">
               {selectedImages.size} selected
