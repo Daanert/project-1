@@ -214,23 +214,30 @@ class ComfyUIMetadataExtractor:
 
     def _is_positive_prompt(self, node_id: str, prompt_data: Dict) -> bool:
         """Check if a CLIP node is for positive prompt based on connections"""
-        # Look for connections to KSampler's positive input
+        # Look for connections to any sampler's positive input
+        # Samplers include: KSampler, KSamplerAdvanced, ClownsharKSampler, etc.
         for node in prompt_data.values():
-            if isinstance(node, dict) and node.get('class_type', '').startswith('KSampler'):
-                inputs = node.get('inputs', {})
-                positive_input = inputs.get('positive', [])
-                if isinstance(positive_input, list) and len(positive_input) > 0:
-                    if str(positive_input[0]) == str(node_id):
-                        return True
+            if isinstance(node, dict):
+                class_type = node.get('class_type', '')
+                # Check for any node type containing 'Sampler' (covers all sampler variants)
+                if 'Sampler' in class_type or 'sampler' in class_type:
+                    inputs = node.get('inputs', {})
+                    positive_input = inputs.get('positive', [])
+                    if isinstance(positive_input, list) and len(positive_input) > 0:
+                        if str(positive_input[0]) == str(node_id):
+                            return True
         return False
 
     def _is_negative_prompt(self, node_id: str, prompt_data: Dict) -> bool:
         """Check if a CLIP node is for negative prompt based on connections"""
-        # Look for connections to KSampler's negative input
+        # Look for connections to any sampler's negative input
         for node in prompt_data.values():
-            if isinstance(node, dict) and node.get('class_type', '').startswith('KSampler'):
-                inputs = node.get('inputs', {})
-                negative_input = inputs.get('negative', [])
+            if isinstance(node, dict):
+                class_type = node.get('class_type', '')
+                # Check for any node type containing 'Sampler' (covers all sampler variants)
+                if 'Sampler' in class_type or 'sampler' in class_type:
+                    inputs = node.get('inputs', {})
+                    negative_input = inputs.get('negative', [])
                 if isinstance(negative_input, list) and len(negative_input) > 0:
                     if str(negative_input[0]) == str(node_id):
                         return True
