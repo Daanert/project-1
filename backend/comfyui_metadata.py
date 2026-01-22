@@ -239,9 +239,9 @@ class ComfyUIMetadataExtractor:
                 if 'Sampler' in class_type or 'sampler' in class_type:
                     inputs = node.get('inputs', {})
                     negative_input = inputs.get('negative', [])
-                if isinstance(negative_input, list) and len(negative_input) > 0:
-                    if str(negative_input[0]) == str(node_id):
-                        return True
+                    if isinstance(negative_input, list) and len(negative_input) > 0:
+                        if str(negative_input[0]) == str(node_id):
+                            return True
         return False
 
     def _extract_prompts_by_heuristic(self, prompt_data: Dict, metadata: Dict) -> None:
