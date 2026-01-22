@@ -312,9 +312,9 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                   </div>
                 )}
 
-                <div className={cn("space-y-3", isMobile ? "p-3 pb-8" : "p-4")}>
+                <div className={cn("space-y-2", isMobile ? "p-2 pb-8" : "p-3")}>
                   <div className="flex items-center justify-between">
-                    <h2 className={cn("font-bold", isMobile ? "text-xl" : "text-2xl")}>Metadata</h2>
+                    <h2 className={cn("font-bold", isMobile ? "text-base" : "text-lg")}>Metadata</h2>
                     {isMobile && (
                       <Button
                         variant="ghost"
@@ -335,30 +335,14 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                       {/* Positive Prompt */}
                       {metadata.positive_prompt && metadata.positive_prompt !== 'N/A' && (
                         <Card>
-                          <CardHeader className={isMobile ? "p-3" : undefined}>
-                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-sm")}>
+                          <CardHeader className={isMobile ? "p-2" : "p-3"}>
+                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-xs")}>
                               POSITIVE PROMPT
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className={isMobile ? "p-3 pt-0" : undefined}>
-                            <p className={cn("leading-relaxed whitespace-pre-wrap", isMobile ? "text-xs" : "text-sm")}>
+                          <CardContent className={isMobile ? "p-2 pt-0" : "p-3 pt-0"}>
+                            <p className={cn("leading-snug whitespace-pre-wrap", isMobile ? "text-xs" : "text-xs")}>
                               {metadata.positive_prompt}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Negative Prompt */}
-                      {metadata.negative_prompt && metadata.negative_prompt !== 'N/A' && (
-                        <Card>
-                          <CardHeader className={isMobile ? "p-3" : undefined}>
-                            <CardTitle className={cn("font-semibold text-destructive", isMobile ? "text-xs" : "text-sm")}>
-                              NEGATIVE PROMPT
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className={isMobile ? "p-3 pt-0" : undefined}>
-                            <p className={cn("leading-relaxed whitespace-pre-wrap", isMobile ? "text-xs" : "text-sm")}>
-                              {metadata.negative_prompt}
                             </p>
                           </CardContent>
                         </Card>
@@ -367,47 +351,47 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                       {/* Generation Parameters */}
                       {metadata.sampler && Object.keys(metadata.sampler).length > 0 && (
                         <Card>
-                          <CardHeader className={isMobile ? "p-3" : undefined}>
-                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-sm")}>
+                          <CardHeader className={isMobile ? "p-2" : "p-3"}>
+                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-xs")}>
                               GENERATION PARAMETERS
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className={isMobile ? "p-3 pt-0" : undefined}>
-                            <div className="grid grid-cols-2 gap-2">
+                          <CardContent className={isMobile ? "p-2 pt-0" : "p-3 pt-0"}>
+                            <div className="grid grid-cols-2 gap-1.5">
                               {metadata.sampler.seed && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">Seed</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.seed}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">Seed</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.seed}</p>
                                 </div>
                               )}
                               {metadata.sampler.steps && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">Steps</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.steps}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">Steps</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.steps}</p>
                                 </div>
                               )}
                               {metadata.sampler.cfg_scale && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">CFG Scale</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.cfg_scale}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">CFG Scale</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.cfg_scale}</p>
                                 </div>
                               )}
                               {metadata.sampler.sampler_name && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">Sampler</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.sampler_name}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">Sampler</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.sampler_name}</p>
                                 </div>
                               )}
                               {metadata.sampler.scheduler && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">Scheduler</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.scheduler}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">Scheduler</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.scheduler}</p>
                                 </div>
                               )}
                               {metadata.sampler.denoise && (
-                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className="text-xs text-muted-foreground">Denoise</p>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{metadata.sampler.denoise}</p>
+                                <div className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-1.5")}>
+                                  <p className="text-[10px] text-muted-foreground">Denoise</p>
+                                  <p className="font-medium text-xs">{metadata.sampler.denoise}</p>
                                 </div>
                               )}
                             </div>
@@ -418,16 +402,16 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                       {/* Models */}
                       {metadata.models && metadata.models.length > 0 && (
                         <Card>
-                          <CardHeader className={isMobile ? "p-3" : undefined}>
-                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-sm")}>
+                          <CardHeader className={isMobile ? "p-2" : "p-3"}>
+                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-xs")}>
                               MODELS
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className={isMobile ? "p-3 pt-0" : undefined}>
-                            <div className="space-y-2">
+                          <CardContent className={isMobile ? "p-2 pt-0" : "p-3 pt-0"}>
+                            <div className="space-y-1.5">
                               {metadata.models.map((model, idx) => (
-                                <div key={idx} className={cn("bg-muted rounded-md", isMobile ? "p-1.5" : "p-2")}>
-                                  <p className={cn("font-medium", isMobile ? "text-xs" : "text-sm")}>{model}</p>
+                                <div key={idx} className="bg-muted rounded-md p-1.5">
+                                  <p className="font-medium text-xs">{model}</p>
                                 </div>
                               ))}
                             </div>
@@ -438,24 +422,24 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                       {/* LoRAs */}
                       {metadata.loras && metadata.loras.length > 0 && (
                         <Card>
-                          <CardHeader className={isMobile ? "p-3" : undefined}>
-                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-sm")}>
+                          <CardHeader className={isMobile ? "p-2" : "p-3"}>
+                            <CardTitle className={cn("font-semibold text-primary", isMobile ? "text-xs" : "text-xs")}>
                               LORAS
                             </CardTitle>
                           </CardHeader>
-                          <CardContent className={isMobile ? "p-3 pt-0" : undefined}>
-                            <div className="space-y-2">
+                          <CardContent className={isMobile ? "p-2 pt-0" : "p-3 pt-0"}>
+                            <div className="space-y-1.5">
                               {metadata.loras.map((lora, idx) => (
-                                <div key={idx} className={cn("bg-muted rounded-md", isMobile ? "p-2" : "p-3")}>
-                                  <p className={cn("font-medium mb-1.5", isMobile ? "text-xs" : "text-sm")}>{lora.name}</p>
-                                  <div className="flex flex-wrap gap-1.5">
+                                <div key={idx} className="bg-muted rounded-md p-1.5">
+                                  <p className="font-medium mb-1 text-xs">{lora.name}</p>
+                                  <div className="flex flex-wrap gap-1">
                                     {lora.strength_model !== null && (
-                                      <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                                      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary ring-1 ring-inset ring-primary/20">
                                         Model: {lora.strength_model}
                                       </span>
                                     )}
                                     {lora.strength_clip !== null && (
-                                      <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                                      <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary ring-1 ring-inset ring-primary/20">
                                         CLIP: {lora.strength_clip}
                                       </span>
                                     )}
@@ -463,6 +447,22 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                                 </div>
                               ))}
                             </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Negative Prompt */}
+                      {metadata.negative_prompt && metadata.negative_prompt !== 'N/A' && (
+                        <Card>
+                          <CardHeader className={isMobile ? "p-2" : "p-3"}>
+                            <CardTitle className={cn("font-semibold text-destructive", isMobile ? "text-xs" : "text-xs")}>
+                              NEGATIVE PROMPT
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className={isMobile ? "p-2 pt-0" : "p-3 pt-0"}>
+                            <p className={cn("leading-snug whitespace-pre-wrap", isMobile ? "text-xs" : "text-xs")}>
+                              {metadata.negative_prompt}
+                            </p>
                           </CardContent>
                         </Card>
                       )}
