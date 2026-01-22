@@ -145,8 +145,9 @@ class ComfyUIMetadataExtractor:
                 class_type = node_data.get('class_type', '')
                 inputs = node_data.get('inputs', {})
 
-                # Extract KSampler parameters
-                if 'KSampler' in class_type:
+                # Extract sampler parameters from any sampler node
+                # Covers KSampler, KSamplerAdvanced, ClownsharKSampler, etc.
+                if 'Sampler' in class_type or 'sampler' in class_type:
                     metadata['sampler_params'] = {
                         'seed': inputs.get('seed'),
                         'steps': inputs.get('steps'),
