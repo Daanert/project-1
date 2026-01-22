@@ -44,4 +44,7 @@ target/
 .stylelintcache
 .cache/
 tmp/
-temp/ 
+temp/
+
+# Deployment markers
+.dependencies_installed 
