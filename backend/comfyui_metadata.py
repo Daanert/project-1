@@ -83,6 +83,39 @@ class ComfyUIMetadataExtractor:
                 'models': []
             }
 
+    def _resolve_text_reference(self, text_value: Any, prompt_data: Dict, max_depth: int = 5) -> str:
+        """
+        Recursively resolve text references until actual text is found
+
+        Args:
+            text_value: The text value (can be string or reference list)
+            prompt_data: The prompt data dictionary
+            max_depth: Maximum recursion depth to prevent infinite loops
+
+        Returns:
+            The resolved text string
+        """
+        # Base case: if it's already a string, return it
+        if isinstance(text_value, str):
+            return text_value
+
+        # If max depth reached, return empty string
+        if max_depth <= 0:
+            return ''
+
+        # If it's a list reference [node_id, output_index]
+        if isinstance(text_value, list) and len(text_value) >= 1:
+            referenced_node_id = str(text_value[0])
+            if referenced_node_id in prompt_data:
+                referenced_node = prompt_data[referenced_node_id]
+                referenced_inputs = referenced_node.get('inputs', {})
+                referenced_text = referenced_inputs.get('text', '')
+
+                # Recursively resolve the reference
+                return self._resolve_text_reference(referenced_text, prompt_data, max_depth - 1)
+
+        return ''
+
     def _parse_prompt_data(self, metadata: Dict[str, Any]) -> None:
         """
         Parse the prompt JSON to extract KSampler parameters, prompts, and Lora nodes
@@ -116,33 +149,23 @@ class ComfyUIMetadataExtractor:
                         'denoise': inputs.get('denoise'),
                     }
 
-                # Extract positive prompt (check if it's a reference to another node)
+                # Extract positive prompt (recursively resolve references)
                 if class_type in ['CLIPTextEncode', 'CLIPTextEncodeSDXL'] and self._is_positive_prompt(node_id, prompt_data):
                     text = inputs.get('text', '')
-                    # If text is a list, it's a reference to another node [node_id, output_index]
-                    if isinstance(text, list) and len(text) >= 1:
-                        referenced_node_id = str(text[0])
-                        if referenced_node_id in prompt_data:
-                            referenced_node = prompt_data[referenced_node_id]
-                            referenced_inputs = referenced_node.get('inputs', {})
-                            text = referenced_inputs.get('text', '')
+                    # Recursively resolve text references (handles RandomLine, etc.)
+                    resolved_text = self._resolve_text_reference(text, prompt_data)
 
-                    if isinstance(text, str) and len(text) > len(metadata['positive_prompt']):
-                        metadata['positive_prompt'] = text
+                    if isinstance(resolved_text, str) and len(resolved_text) > len(metadata['positive_prompt']):
+                        metadata['positive_prompt'] = resolved_text
 
-                # Extract negative prompt (check if it's a reference to another node)
+                # Extract negative prompt (recursively resolve references)
                 if class_type in ['CLIPTextEncode', 'CLIPTextEncodeSDXL'] and self._is_negative_prompt(node_id, prompt_data):
                     text = inputs.get('text', '')
-                    # If text is a list, it's a reference to another node [node_id, output_index]
-                    if isinstance(text, list) and len(text) >= 1:
-                        referenced_node_id = str(text[0])
-                        if referenced_node_id in prompt_data:
-                            referenced_node = prompt_data[referenced_node_id]
-                            referenced_inputs = referenced_node.get('inputs', {})
-                            text = referenced_inputs.get('text', '')
+                    # Recursively resolve text references
+                    resolved_text = self._resolve_text_reference(text, prompt_data)
 
-                    if isinstance(text, str):
-                        metadata['negative_prompt'] = text
+                    if isinstance(resolved_text, str):
+                        metadata['negative_prompt'] = resolved_text
 
                 # Extract Lora loader information (standard LoraLoader)
                 if ('LoraLoader' in class_type or 'Lora' in class_type) and 'Power' not in class_type:
