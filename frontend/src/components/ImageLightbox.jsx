@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
   const [metadata, setMetadata] = useState(null);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
-  const [showMetadata, setShowMetadata] = useState(false); // Default closed on mobile
+  const [showMetadata, setShowMetadata] = useState(true); // Default open
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
 
@@ -312,7 +312,7 @@ const ImageLightbox = ({ images, currentIndex, onClose, onNavigate }) => {
                   </div>
                 )}
 
-                <div className={cn("space-y-4", isMobile ? "p-4 pb-8" : "p-6")}>
+                <div className={cn("space-y-3", isMobile ? "p-3 pb-8" : "p-4")}>
                   <div className="flex items-center justify-between">
                     <h2 className={cn("font-bold", isMobile ? "text-xl" : "text-2xl")}>Metadata</h2>
                     {isMobile && (

@@ -11,7 +11,7 @@ import { cn } from './lib/utils';
 
 function App() {
   const [images, setImages] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true); // Dark mode by default
   const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
