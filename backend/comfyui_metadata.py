@@ -109,7 +109,14 @@ class ComfyUIMetadataExtractor:
             if referenced_node_id in prompt_data:
                 referenced_node = prompt_data[referenced_node_id]
                 referenced_inputs = referenced_node.get('inputs', {})
-                referenced_text = referenced_inputs.get('text', '')
+
+                # ShowText nodes (pysssss) store text in 'text_0' instead of 'text'
+                # Try multiple possible text field names
+                referenced_text = (
+                    referenced_inputs.get('text_0', '') or  # ShowText|pysssss
+                    referenced_inputs.get('string', '') or   # String nodes
+                    referenced_inputs.get('text', '')        # Default
+                )
 
                 # Recursively resolve the reference
                 return self._resolve_text_reference(referenced_text, prompt_data, max_depth - 1)
